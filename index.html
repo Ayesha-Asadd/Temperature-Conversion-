@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Temperature Converter - SOAP API (CORS Proxy)</title>
+  <style> 
+body{
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Set background properties for image slideshow */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: bgImageAnimation 24s ease-in-out infinite;
+}
+
+/* Define keyframes to change background images with fade */
+@keyframes bgImageAnimation {
+  0% {
+    background-image: url('https://images.tech.co/wp-content/uploads/2015/06/weather.jpg');
+  }
+  33% {
+    background-image: url('https://static.vecteezy.com/system/resources/thumbnails/042/379/442/small_2x/ai-generated-blue-sky-with-bright-sun-as-abstract-panoramic-background-ai-generated-image-photo.jpg');
+  }
+  66% {
+    background-image: url('https://static.vecteezy.com/system/resources/thumbnails/042/379/531/small/ai-generated-blue-sky-with-bright-sun-as-abstract-panoramic-background-ai-generated-image-photo.jpg');
+  }
+  100% {
+    background-image: url('https://images.tech.co/wp-content/uploads/2015/06/weather.jpg');
+  }
+}
+
+/* Keep the rest of your styles the same */
+.container {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 74, 173, 0.25);
+  backdrop-filter: blur(10px);
+  text-align: center;
+  width: 350px;
+}
+h2 {
+  margin-bottom: 15px;
+  color: #004aad;
+}
+select{
+  padding: 12px;
+  margin-top: 12px;
+  width: 100%;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 74, 173, 0.2);
+  outline: none;
+  background: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease-in-out;
+}
+ input {
+  padding: 12px;
+  margin-top: 12px;
+  width: 93%;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 74, 173, 0.2);
+  outline: none;
+  background: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease-in-out;
+}
+
+select:focus, input:focus {
+  border-color: #004aad;
+  box-shadow: 0 0 10px rgba(0, 74, 173, 0.4);
+}
+
+button {
+  background: linear-gradient(135deg, #004aad, #ffeb3b);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 15px rgba(0, 74, 173, 0.3);
+}
+
+button:hover {
+  background: linear-gradient(135deg, #003580, #fdd835);
+  box-shadow: 0 8px 25px rgba(0, 74, 173, 0.5);
+  transform: translateY(-2px);
+}
+
+.result {
+  margin-top: 15px;
+  font-weight: bold;
+  color: #004aad;
+  background: rgba(255, 235, 59, 0.85);
+  padding: 12px;
+  border-radius: 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0, 74, 173, 0.25);
+  transition: transform 0.3s ease-in-out;
+}
+
+.result:hover {
+  transform: scale(1.05);
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Temperature Converter</h2>
+  <input type="number" id="tempValue" placeholder="Enter temperature">
+  <select id="conversionType">
+    <option value="CelsiusToFahrenheit">Celsius to Fahrenheit</option>
+    <option value="FahrenheitToCelsius">Fahrenheit to Celsius</option>
+  </select>
+  <button onclick="convertTemperature()">Convert</button>
+  <div class="result" id="result">Converted value will appear here</div>
+</div>
+
+<script>
+  async function convertTemperature() {
+    const value = document.getElementById('tempValue').value;
+    const type = document.getElementById('conversionType').value;
+    const resultBox = document.getElementById('result');
+
+    if (!value) {
+      resultBox.innerText = "Please enter a temperature value.";
+      return;
+    }
+
+    // SOAP Request Body
+    let soapBody;
+    if (type === "CelsiusToFahrenheit") {
+      soapBody = `
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <CelsiusToFahrenheit xmlns="https://www.w3schools.com/xml/">
+              <Celsius>${value}</Celsius>
+            </CelsiusToFahrenheit>
+          </soap:Body>
+        </soap:Envelope>`;
+    } else {
+      soapBody = `
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+          <soap:Body>
+            <FahrenheitToCelsius xmlns="https://www.w3schools.com/xml/">
+              <Fahrenheit>${value}</Fahrenheit>
+            </FahrenheitToCelsius>
+          </soap:Body>
+        </soap:Envelope>`;
+    }
+
+    try {
+      // Using corsproxy.io instead of cors-anywhere
+      const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent("https://www.w3schools.com/xml/tempconvert.asmx");
+
+      const response = await fetch(proxyUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/xml; charset=utf-8",
+          "SOAPAction": `https://www.w3schools.com/xml/${type}`
+        },
+        body: soapBody
+      });
+
+      const textResponse = await response.text();
+
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(textResponse, "text/xml");
+      const resultTag = xmlDoc.getElementsByTagName(type + "Result")[0];
+      
+      if (resultTag) {
+        resultBox.innerText = `Converted Value: ${resultTag.textContent}`;
+      } else {
+        resultBox.innerText = "No result found.";
+      }
+    } catch (error) {
+      resultBox.innerText = "Error: " + error.message;
+    }
+  }
+</script>
+
+</body>
+</html>
