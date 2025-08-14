@@ -33,7 +33,7 @@ It covers:
 ---
 
 ## 🌍 Live Demo
-**[View Live Project](https://ayesha-asadd.github.io/Temperature-Conversion-/)**
+**[View Live Project](https://ayesha-asadd.github.io/temperature-conversion/)**
 
 ---
 
